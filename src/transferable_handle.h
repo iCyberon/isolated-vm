@@ -1,22 +1,23 @@
 #pragma once
-#include <node.h>
-#include "class_handle.h"
+#include <v8.h>
+#include "isolate/class_handle.h"
+#include "transferable.h"
 #include <memory>
 
 namespace ivm {
 
 class TransferableHandle : public ClassHandle {
 	public:
-		static ShareableIsolate::IsolateSpecific<FunctionTemplate>& TemplateSpecific() {
-			static ShareableIsolate::IsolateSpecific<FunctionTemplate> tmpl;
+		static IsolateEnvironment::IsolateSpecific<v8::FunctionTemplate>& TemplateSpecific() {
+			static IsolateEnvironment::IsolateSpecific<v8::FunctionTemplate> tmpl;
 			return tmpl;
 		}
 
-		static Local<FunctionTemplate> Definition() {
+		static v8::Local<v8::FunctionTemplate> Definition() {
 			return MakeClass("Transferable", nullptr, 0);
 		}
 
 		virtual std::unique_ptr<Transferable> TransferOut() = 0;
 };
 
-}
+} // namespace ivm

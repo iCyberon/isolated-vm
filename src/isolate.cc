@@ -1,6 +1,6 @@
 #include <node.h>
-#include "util.h"
-#include "shareable_isolate.h"
+#include "isolate/util.h"
+#include "isolate/environment.h"
 #include "isolate_handle.h"
 #include "context_handle.h"
 #include "native_module_handle.h"
@@ -8,11 +8,11 @@
 #include "external_copy_handle.h"
 #include "lib_handle.h"
 #include "reference_handle.h"
-#include "platform_delegate.h"
+#include "isolate/platform_delegate.h"
 
 #include <memory>
 
-using namespace std;
+using namespace v8;
 
 namespace ivm {
 
@@ -23,17 +23,14 @@ class LibraryHandle : public TransferableHandle {
 	private:
 		class LibraryHandleTransferable : public Transferable {
 			public:
-				LibraryHandleTransferable() {}
 				virtual Local<Value> TransferIn() {
 					return LibraryHandle::Get();
 				}
 		};
 
 	public:
-		LibraryHandle() {}
-
-		static ShareableIsolate::IsolateSpecific<FunctionTemplate>& TemplateSpecific() {
-			static ShareableIsolate::IsolateSpecific<FunctionTemplate> tmpl;
+		static IsolateEnvironment::IsolateSpecific<FunctionTemplate>& TemplateSpecific() {
+			static IsolateEnvironment::IsolateSpecific<FunctionTemplate> tmpl;
 			return tmpl;
 		}
 
@@ -48,7 +45,7 @@ class LibraryHandle : public TransferableHandle {
 			return tmpl;
 		}
 
-		virtual unique_ptr<Transferable> TransferOut() {
+		virtual std::unique_ptr<Transferable> TransferOut() {
 			return std::make_unique<LibraryHandleTransferable>();
 		}
 
@@ -60,7 +57,7 @@ class LibraryHandle : public TransferableHandle {
 };
 
 // Module entry point
-shared_ptr<ShareableIsolate> root_isolate;
+std::shared_ptr<IsolateHolder> root_isolate;
 extern "C"
 void init(Local<Object> target) {
 
@@ -74,11 +71,11 @@ void init(Local<Object> target) {
 	V8::SetFlagsFromCommandLine(&argc, (char**)flags, false);
 
 	Isolate* isolate = Isolate::GetCurrent();
-	root_isolate = make_shared<ShareableIsolate>(isolate, isolate->GetCurrentContext());
+	root_isolate = IsolateEnvironment::New(isolate, isolate->GetCurrentContext());
 	target->Set(v8_symbol("ivm"), LibraryHandle::Get());
 	PlatformDelegate::InitializeDelegate();
 }
 
-}
+} // namespace ivm
 
 NODE_MODULE(isolated_vm, ivm::init)

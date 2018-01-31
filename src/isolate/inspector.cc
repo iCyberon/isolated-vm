@@ -1,16 +1,9 @@
-#include "shareable_isolate.h"
+#include "environment.h"
 #include "inspector.h"
 
 using namespace ivm;
 using namespace v8;
 using namespace v8_inspector;
-
-InspectorSession::~InspectorSession() {
-	V8InspectorSession* session = this->session.release();
-	if (!isolate->ScheduleHandleTask(false, [session]() { delete session; })) {
-		delete session;
-	}
-}
 
 void InspectorSession::dispatchBackendProtocolMessage(std::vector<uint16_t> message) {
 	auto message_ptr = std::make_shared<decltype(message)>(std::move(message));
@@ -27,7 +20,7 @@ void InspectorClientImpl::runMessageLoopOnPause(int context_group_id) {
 	std::unique_lock<std::mutex> lock(mutex);
 	running = true;
 	while (running) {
-		ShareableIsolate::InterruptEntry(Isolate::GetCurrent(), isolate);
+		IsolateEnvironment::InterruptEntry(Isolate::GetCurrent(), isolate);
 		cv.wait(lock);
 	}
 }
