@@ -128,6 +128,7 @@ class ExternalCopySerialized : public ExternalCopy {
 		v8::Local<v8::Value> CopyInto(bool transfer_in = false) final;
 		size_t Size() const final;
 		uint32_t WorstCaseHeapSize() const final;
+		std::shared_ptr<class ExternalCopyArrayBuffer> get_data();
 };
 
 /**

@@ -184,6 +184,10 @@ uint32_t ExternalCopySerialized::WorstCaseHeapSize() const {
 	return size * 6;
 }
 
+std::shared_ptr<ExternalCopyArrayBuffer> ExternalCopySerialized::get_data() {
+	return std::make_shared<ExternalCopyArrayBuffer>(buffer.get(), size);
+}
+
 /**
  * ExternalCopyError implementation
  */

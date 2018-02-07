@@ -39,7 +39,8 @@ Local<FunctionTemplate> ExternalCopyHandle::Definition() {
 		"ExternalCopy", ParameterizeCtor<decltype(&New), &New>(),
 		"copy", Parameterize<decltype(&ExternalCopyHandle::Copy), &ExternalCopyHandle::Copy>(),
 		"copyInto", Parameterize<decltype(&ExternalCopyHandle::CopyInto), &ExternalCopyHandle::CopyInto>(),
-		"dispose", Parameterize<decltype(&ExternalCopyHandle::Dispose), &ExternalCopyHandle::Dispose>()
+		"dispose", Parameterize<decltype(&ExternalCopyHandle::Dispose), &ExternalCopyHandle::Dispose>(),
+		"_dumpRaw", Parameterize<decltype(&ExternalCopyHandle::DumpRaw), &ExternalCopyHandle::DumpRaw>()
 	));
 }
 
@@ -90,6 +91,13 @@ Local<Value> ExternalCopyHandle::Dispose() {
 	Isolate::GetCurrent()->AdjustAmountOfExternalAllocatedMemory(-(ssize_t)value->Size());
 	value.reset();
 	return Undefined(Isolate::GetCurrent());
+}
+
+Local<Value> ExternalCopyHandle::DumpRaw() {
+	CheckDisposed();
+	auto foo = dynamic_cast<ExternalCopySerialized*>(value.get());
+	if (!foo) throw js_generic_error("not serialized");
+	return foo->get_data()->CopyInto();
 }
 
 /**
