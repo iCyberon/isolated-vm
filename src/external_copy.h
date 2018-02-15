@@ -99,7 +99,8 @@ class ExternalCopyTemplate<v8::String, std::shared_ptr<std::vector<uint16_t>>> :
 				// v8 crashes if you send it an empty external string :(
 				return v8::String::Empty(v8::Isolate::GetCurrent());
 			} else {
-				return Unmaybe(v8::String::NewExternalTwoByte(v8::Isolate::GetCurrent(), new ExternalString(value)));
+				return Unmaybe(v8::String::NewFromTwoByte(v8::Isolate::GetCurrent(), &(*value)[0], v8::NewStringType::kNormal, value->size()));
+				// return Unmaybe(v8::String::NewExternalTwoByte(v8::Isolate::GetCurrent(), new ExternalString(value)));
 			}
 		}
 
