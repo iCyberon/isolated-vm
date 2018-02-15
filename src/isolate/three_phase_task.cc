@@ -14,11 +14,15 @@ ThreePhaseTask::Phase2Runner::Phase2Runner(
 	unique_ptr<ThreePhaseTask> self,
 	shared_ptr<IsolateHolder> first_isolate_ref,
 	unique_ptr<Persistent<Promise::Resolver>> promise_persistent,
-	unique_ptr<Persistent<Context>> context_persistent
+	unique_ptr<Persistent<Context>> context_persistent,
+	unique_ptr<Persistent<StackTrace>> stack_trace
 ) :
 	self(std::move(self)),
 	first_isolate_ref(std::move(first_isolate_ref)),
-	promise_persistent(std::move(promise_persistent)), context_persistent(std::move(context_persistent)) {}
+	promise_persistent(std::move(promise_persistent)),
+	context_persistent(std::move(context_persistent)),
+	stack_trace(std::move(stack_trace))
+	{}
 
 ThreePhaseTask::Phase2Runner::~Phase2Runner() {
 	if (!did_run) {
@@ -27,12 +31,18 @@ ThreePhaseTask::Phase2Runner::~Phase2Runner() {
 			unique_ptr<ThreePhaseTask> self;
 			unique_ptr<Persistent<Promise::Resolver>> promise_persistent;
 			unique_ptr<Persistent<Context>> context_persistent;
+			unique_ptr<Persistent<StackTrace>> stack_trace;
 
 			Phase3Orphan(
 				unique_ptr<ThreePhaseTask> self,
 				unique_ptr<Persistent<Promise::Resolver>> promise_persistent,
-				unique_ptr<Persistent<Context>> context_persistent
-			) : self(std::move(self)), promise_persistent(std::move(promise_persistent)), context_persistent(std::move(context_persistent)) {}
+				unique_ptr<Persistent<Context>> context_persistent,
+				unique_ptr<Persistent<StackTrace>> stack_trace
+			) :
+				self(std::move(self)),
+				promise_persistent(std::move(promise_persistent)),
+				context_persistent(std::move(context_persistent)),
+				stack_trace(std::move(stack_trace)) {}
 
 			void Run() final {
 				// Revive our persistent handles
@@ -41,12 +51,19 @@ ThreePhaseTask::Phase2Runner::~Phase2Runner() {
 				Context::Scope context_scope(context_local);
 				auto promise_local = Local<Promise::Resolver>::New(isolate, *promise_persistent);
 				// Throw from promise
-				Unmaybe(promise_local->Reject(context_local, Exception::Error(v8_string("Isolate is disposed"))));
+				Unmaybe(promise_local->Reject(context_local, AttachStack(Exception::Error(v8_string("Isolate is disposed")), Deref(*stack_trace))));
 				isolate->RunMicrotasks();
 			}
 		};
 		// Schedule a throw task back in first isolate
-		first_isolate_ref->ScheduleTask(std::make_unique<Phase3Orphan>(std::move(self), std::move(promise_persistent), std::move(context_persistent)), false, true);
+		first_isolate_ref->ScheduleTask(
+			std::make_unique<Phase3Orphan>(
+				std::move(self),
+				std::move(promise_persistent),
+				std::move(context_persistent),
+				std::move(stack_trace)
+			), false, true
+		);
 	}
 }
 

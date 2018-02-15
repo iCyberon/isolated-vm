@@ -44,6 +44,7 @@
 				'src/isolate/holder.cc',
 				'src/isolate/inspector.cc',
 				'src/isolate/three_phase_task.cc',
+				'src/isolate/util.cc',
 				'src/context_handle.cc',
 				'src/external_copy.cc',
 				'src/external_copy_handle.cc',

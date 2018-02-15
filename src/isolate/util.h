@@ -85,6 +85,11 @@ v8::Local<T> Deref(const v8::Persistent<T>& handle) {
 }
 
 /**
+ * Sets `stack` accessor on this error object which renders the given stack
+ */
+v8::Local<v8::Value> AttachStack(v8::Local<v8::Value> error, v8::Local<v8::StackTrace> stack);
+
+/**
  * Run a function and annotate the exception with source / line number if it throws
  */
 // TODO: This is only used by isolate_handle.h -- move this to .cc file
